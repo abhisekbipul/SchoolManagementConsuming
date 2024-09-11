@@ -1,0 +1,147 @@
+﻿@* @model List<Event>
+
+<h2>Event List</h2>
+
+<a href="@Url.Action("AddEvent", "Event")">Add New Event</a>
+<br />
+<br />
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Is Academic</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var eventItem in Model)
+        {
+            <tr>
+                <td>@eventItem.Title</td>
+                <td>@eventItem.Description</td>
+                <td>@eventItem.StartDate.ToString("g")</td>
+                <td>@eventItem.EndDate.ToString("g")</td>
+                <td>@(eventItem.IsAcademic ? "Yes" : "No")</td>
+                <td>
+                    <a href="@Url.Action("UpdateEvent", "Event", new { id = eventItem.Id })">Edit</a> |
+                    <a href="@Url.Action("DeleteEvent", "Event", new { id = eventItem.Id })">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table> *@
+
+
+
+@{
+    ViewData["Title"] = "Events Calendar";
+}
+
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
+
+<h2>Events Calendar</h2>
+<div id="calendar"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'en', 
+            events: function (fetchInfo, successCallback, failureCallback) {
+                $.ajax({
+                    url: '/Event/Index',
+                    type: 'GET',
+                    success: function (data) {
+                        var events = data.map(event => ({
+                            id: event.id,
+                            title: event.title,
+                            start: event.startDate,
+                            end: event.endDate,
+                            extendedProps: {
+                                description: event.description,
+                                isAcademic: event.isAcademic
+                            }
+                        }));
+                        successCallback(events);
+                    },
+                    error: function () {
+                        failureCallback();
+                    }
+                });
+            },
+
+            dateClick: function (info) {
+                var title = prompt('Enter Event Title:');
+                if (title) {
+                    var description = prompt('Enter Event Description:');
+                    var isAcademic = confirm('Is this an academic event?');
+                    var endDate = prompt('Enter End Date (yyyy-MM-dd):');
+                    $.ajax({
+                        url: '/Event/AddEvent',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            title: title,
+                            description: description,
+                            startDate: info.dateStr,
+                            endDate: endDate,
+                            isAcademic: isAcademic
+                        }),
+                        success: function () {
+                            calendar.refetchEvents();
+                        }
+                    });
+                }
+            },
+
+            eventClick: function (info) {
+                var newTitle = prompt('Enter new title:', info.event.title);
+                if (newTitle) {
+                    var newDescription = prompt('Enter new description:', info.event.extendedProps.description);
+                    var newIsAcademic = confirm('Is this an academic event?');
+                    $.ajax({
+                        url: '/Event/UpdateEvent',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            id: info.event.id,
+                            title: newTitle,
+                            description: newDescription,
+                            startDate: info.event.startStr,
+                            endDate: info.event.endStr,
+                            isAcademic: newIsAcademic
+                        }),
+                        success: function () {
+                            calendar.refetchEvents();
+                        }
+                    });
+                }
+            },
+
+            eventDrop: function (info) {
+                if (confirm('Are you sure you want to delete this event?')) {
+                    $.ajax({
+                        url: '/Event/DeleteEvent/' + info.event.id,
+                        type: 'POST',
+                        success: function () {
+                            calendar.refetchEvents();
+                        }
+                    });
+                }
+            }
+        });
+
+        calendar.render();
+    });
+</script>
+
