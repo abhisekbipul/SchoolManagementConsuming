@@ -15,7 +15,12 @@ namespace SchoolManagementConsuming.Controllers
 
             client = new HttpClient(clientHandler);
         }
+
         public IActionResult Index()
+        {
+            return View();
+        }
+        public IActionResult GetEvents()
         {
             List<Event> eventList = new List<Event>();
             string url = "https://localhost:7062/api/Event/GetEvents";
@@ -25,23 +30,20 @@ namespace SchoolManagementConsuming.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var jsonData = response.Content.ReadAsStringAsync().Result;
-                var obj = JsonConvert.DeserializeObject<List<Event>>(jsonData);
-                if (obj != null)
-                {
-                    eventList = obj;
-                }
+                eventList = JsonConvert.DeserializeObject<List<Event>>(jsonData);
             }
 
             var calendarEvents = eventList.Select(e => new
             {
                 id = e.Id,
                 title = e.Title,
-                startDate = e.StartDate.ToString("yyyy-MM-ddTHH:mm:ss"),
-                endDate = e.EndDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                start = e.StartDate.ToString("yyyy-MM-dd"),
+                end = e.EndDate.ToString("yyyy-MM-dd"),
                 description = e.Description,
                 isAcademic = e.IsAcademic
             });
-            return View(eventList);
+
+            return Json(calendarEvents);
         }
 
         public IActionResult AddEvent()
@@ -53,7 +55,12 @@ namespace SchoolManagementConsuming.Controllers
         [HttpPost]
         public IActionResult AddEvent(Event newEvent)
         {
-            string url = "https://localhost:7062/api/Event/CreateEvent"; 
+            if (newEvent == null)
+            {
+                return BadRequest("Event data is null.");
+            }
+
+            string url = "https://localhost:7062/api/Event/CreateEvent";
             var jsonData = JsonConvert.SerializeObject(newEvent);
             StringContent stringContent = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
@@ -61,10 +68,10 @@ namespace SchoolManagementConsuming.Controllers
 
             if (result.IsSuccessStatusCode)
             {
-                return Ok();
+                return RedirectToAction("Index");
             }
 
-            return BadRequest();
+            return View(newEvent);
         }
 
         public IActionResult UpdateEvent(int id)

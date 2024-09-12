@@ -1,0 +1,19 @@
+﻿
+
+@model SignIn
+
+<form asp-action="Login" method="post">
+    <div>
+        <label asp-for="Username">Username:</label>
+        <input asp-for="Username" />
+    </div>
+    <div>
+        <label asp-for="Password">Password:</label>
+        <input asp-for="Password" type="password" />
+    </div>
+    <br />
+    <br />
+    <button type="submit">Login</button>
+    <p>@ViewBag.Message</p>
+</form>
+

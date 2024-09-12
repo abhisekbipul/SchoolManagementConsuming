@@ -1,0 +1,21 @@
+﻿@model SignUp
+
+
+<form asp-action="Register" method="post">
+    <div>
+        <label asp-for="Username">Username:</label>
+        <input asp-for="Username" />
+    </div>
+    <div>
+        <label asp-for="Password">Password:</label>
+        <input asp-for="Password" type="password" />
+    </div>
+    <div>
+        <label asp-for="Role">Role:</label>
+        <input asp-for="Role" />
+    </div>
+    <br />
+    <br />
+    <button type="submit">Register</button>
+    <p>@ViewBag.Message</p>
+</form>
